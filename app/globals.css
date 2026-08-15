@@ -3,8 +3,9 @@
 :root { --background: #f4f7f7; --foreground: #183033; }
 @theme inline { --color-background: var(--background); --color-foreground: var(--foreground); --font-sans: var(--font-geist-sans); }
 * { box-sizing: border-box; }
-html { background: var(--background); }
+html { background: var(--background); scroll-behavior: smooth; }
 body { background: var(--background); color: var(--foreground); font-family: var(--font-geist-sans), Arial, sans-serif; margin: 0; }
+a { text-underline-offset: 3px; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 ::-webkit-scrollbar { width: 7px; height: 7px; }
@@ -18,4 +19,16 @@ button { cursor: pointer; }
   .input { @apply mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100; }
   .textarea { @apply mt-1 h-20 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-teal-500; }
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60; }
+}
+
+@layer components {
+  .legal-content { @apply text-base leading-8 text-slate-600; }
+  .legal-content h2 { @apply mt-10 text-2xl font-bold tracking-tight text-slate-950; }
+  .legal-content p { @apply mt-4; }
+  .legal-content a { @apply font-semibold text-teal-700 underline decoration-teal-300; }
+  .legal-content .legal-updated { @apply mt-0 rounded-2xl bg-teal-50 px-5 py-4 text-sm font-semibold text-teal-900; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }

@@ -5,10 +5,20 @@ import "./globals.css";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "CIASSTEC Atendimento", template: "%s | CIASSTEC" },
-  description: "Central de atendimento e gestão de assistência técnica da CIASSTEC.",
+  metadataBase: new URL("https://ciasstec.com.br"),
+  title: { default: "CIASSTEC | Assistência Técnica em Informática", template: "%s | CIASSTEC" },
+  description: "Assistência técnica em computadores, notebooks, impressoras, redes e suporte em informática.",
   manifest: "/manifest.webmanifest",
-  applicationName: "CIASSTEC Atendimento",
+  applicationName: "CIASSTEC",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: "https://ciasstec.com.br",
+    siteName: "CIASSTEC",
+    title: "CIASSTEC | Assistência Técnica em Informática",
+    description: "Assistência técnica em computadores, notebooks, impressoras, redes e suporte em informática.",
+    images: [{ url: "/og.png", width: 1732, height: 909, alt: "CIASSTEC — Assistência Técnica em Informática" }],
+  },
 };
 
 export const viewport: Viewport = { themeColor: "#0f766e" };

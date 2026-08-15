@@ -16,7 +16,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Abra `http://localhost:3000`. A raiz redireciona para `/dashboard`; sem uma sessão válida, o middleware redireciona para `/login`. As variáveis públicas do Supabase precisam estar configuradas para autenticar.
+Abra `http://localhost:3000` para acessar o site institucional. O sistema administrativo fica em `/login`; sem uma sessão válida, o acesso a `/dashboard` é redirecionado para o login. As variáveis públicas do Supabase precisam estar configuradas para autenticar.
 
 ## Configuração do Supabase
 
@@ -62,7 +62,7 @@ npm start
 
 ## Integração futura com WhatsApp Business
 
-A rota `app/api/webhooks/whatsapp/route.ts` já possui o `GET` de verificação e um `POST` simulado. Para ativar:
+A rota `app/api/webhooks/whatsapp/route.ts` possui o `GET` de verificação e recebe eventos válidos da WhatsApp Cloud API por `POST`. Para completar o processamento dos eventos:
 
 1. Crie um app Business na Meta for Developers e configure o produto WhatsApp.
 2. Cadastre `https://seu-dominio.com/api/webhooks/whatsapp` como callback e use o mesmo valor de `WHATSAPP_VERIFY_TOKEN` na Meta e na Vercel.
