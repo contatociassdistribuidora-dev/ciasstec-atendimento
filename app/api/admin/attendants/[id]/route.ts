@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/admin";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, getAdminConfigStatus } from "@/lib/supabase/admin";
 import { normalizeAttendantInput, validateAttendant } from "@/lib/attendants";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const admin = createAdminClient();
-  if (!admin) return NextResponse.json({ error: "Administração do Supabase não configurada no servidor." }, { status: 503 });
+  if (!admin) return NextResponse.json({ error: "Administração do Supabase não configurada no servidor.", diagnostics: getAdminConfigStatus() }, { status: 503 });
   const { id } = await context.params;
   const input = normalizeAttendantInput(await request.json() as Record<string, unknown>);
   const validationError = validateAttendant(input);

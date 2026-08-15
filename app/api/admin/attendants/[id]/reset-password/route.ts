@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/admin";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, getAdminConfigStatus } from "@/lib/supabase/admin";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const admin = createAdminClient();
-  if (!admin) return NextResponse.json({ error: "Administração do Supabase não configurada no servidor." }, { status: 503 });
+  if (!admin) return NextResponse.json({ error: "Administração do Supabase não configurada no servidor.", diagnostics: getAdminConfigStatus() }, { status: 503 });
   const { id } = await context.params;
   const body = await request.json() as { password?: unknown; confirmPassword?: unknown };
   const password = String(body.password ?? "");
