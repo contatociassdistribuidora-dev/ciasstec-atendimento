@@ -68,13 +68,13 @@ export async function generateLocalAiSuggestion(input: {
     input.reportedIssue ? `Defeito informado: ${compact(input.reportedIssue, 300)}` : "",
     `Contexto recente:\n${context}`,
     `Última mensagem do cliente: ${compact(latestCustomer.text)}`,
-    "Gere apenas uma sugestão curta para o atendente revisar. Não envie a mensagem.",
   ].filter(Boolean).join("\n\n");
+  const ragQuery = [input.equipment, input.reportedIssue, latestCustomer.text].filter(Boolean).map(value=>compact(value as string, 300)).join(" ");
   try {
     const response = await fetchWithTimeout("/chat", GENERATION_TIMEOUT_MS, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: details }),
+      body: JSON.stringify({ message: details, mode: "ATENDIMENTO_CLIENTE", rag_query: ragQuery }),
     });
     const body = await response.json().catch(() => ({})) as Partial<ChatResult> & { error?: string };
     if (!response.ok || !body.answer) throw new Error(body.error || "A IA Local não conseguiu gerar uma resposta.");
