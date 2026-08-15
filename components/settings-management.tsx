@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Bot, CheckCircle2, Loader2, Mail, MessageCircle, X, XCircle } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 type Status = {
@@ -96,7 +97,7 @@ export function SettingsManagement({ canEdit }: { canEdit: boolean }) {
   ];
 
   return <div className="page-enter space-y-5">
-    <div><h1 className="text-2xl font-bold tracking-tight text-slate-900">Configurações</h1><p className="mt-1 text-sm text-slate-500">Dados da empresa e estado das integrações do servidor</p></div>
+    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><h1 className="text-2xl font-bold tracking-tight text-slate-900">Configurações</h1><p className="mt-1 text-sm text-slate-500">Dados da empresa e estado das integrações do servidor</p></div>{canEdit&&<Link href="/configuracoes/atendentes" className="inline-flex h-10 items-center justify-center rounded-xl border border-teal-200 bg-white px-4 text-sm font-semibold text-teal-700 hover:bg-teal-50">Gerenciar atendentes</Link>}</div>
     {loading ? <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500"><Loader2 className="size-4 animate-spin"/>Carregando configurações...</div> :
     <div className="grid gap-5 xl:grid-cols-2">
       <form onSubmit={save} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

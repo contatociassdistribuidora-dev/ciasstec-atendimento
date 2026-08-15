@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AtendimentoApp } from "@/components/atendimento-app";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -10,5 +11,7 @@ export default async function DashboardPage() {
   const { data: profile, error: profileError } = await supabase.from("profiles").select("full_name, role, active").eq("id", user.id).maybeSingle();
   if (profileError || !profile) { await supabase.auth.signOut(); redirect("/login?error=profile"); }
   if (!profile.active) { await supabase.auth.signOut(); redirect("/login?error=inactive"); }
+  const admin = createAdminClient();
+  if (admin) await admin.from("profiles").update({ last_login_at: new Date().toISOString() }).eq("id", user.id);
   return <AtendimentoApp user={{ email: user.email ?? "", fullName: profile?.full_name ?? user.email ?? "Usuário", role: profile?.role ?? "attendant" }} />;
 }

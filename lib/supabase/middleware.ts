@@ -6,7 +6,7 @@ export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
-    if (request.nextUrl.pathname.startsWith("/dashboard")) {
+    if (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/configuracoes")) {
       const target = request.nextUrl.clone(); target.pathname = "/login"; target.searchParams.set("error", "config");
       return NextResponse.redirect(target);
     }
@@ -18,7 +18,7 @@ export async function updateSession(request: NextRequest) {
   } });
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
-  if (!user && path.startsWith("/dashboard")) { const target=request.nextUrl.clone(); target.pathname="/login"; target.search=""; return NextResponse.redirect(target); }
+  if (!user && (path.startsWith("/dashboard") || path.startsWith("/configuracoes"))) { const target=request.nextUrl.clone(); target.pathname="/login"; target.search=""; return NextResponse.redirect(target); }
   if (user && path === "/login") { const target=request.nextUrl.clone(); target.pathname="/dashboard"; target.search=""; return NextResponse.redirect(target); }
   return response;
 }

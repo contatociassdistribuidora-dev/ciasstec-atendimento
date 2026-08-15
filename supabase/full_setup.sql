@@ -13,9 +13,13 @@ create type public.quote_status as enum ('draft', 'pending', 'approved', 'reject
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  email text,
   full_name text not null,
   role public.user_role not null default 'attendant',
   phone text,
+  whatsapp text,
+  whatsapp_enabled boolean not null default false,
+  last_login_at timestamptz,
   avatar_url text,
   active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -108,8 +112,11 @@ create trigger service_orders_updated_at before update on public.service_orders 
 create trigger quotes_updated_at before update on public.quotes for each row execute function public.set_updated_at();
 create trigger knowledge_updated_at before update on public.knowledge_base for each row execute function public.set_updated_at();
 
+create unique index profiles_email_unique_idx on public.profiles (lower(email)) where email is not null;
+
 create or replace function public.handle_new_user() returns trigger language plpgsql security definer set search_path = '' as $$
-begin insert into public.profiles(id, full_name) values (new.id, coalesce(new.raw_user_meta_data ->> 'full_name', new.email, 'Usuário')); return new; end; $$;
+begin insert into public.profiles(id, email, full_name) values (new.id, new.email, coalesce(new.raw_user_meta_data ->> 'full_name', new.email, 'Usuário')); return new; end; $$;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
 create trigger on_auth_user_created after insert on auth.users for each row execute function public.handle_new_user();
 
 create or replace function public.is_admin() returns boolean language sql stable security definer set search_path = '' as $$
@@ -130,7 +137,7 @@ alter table public.quotes enable row level security;
 alter table public.quote_items enable row level security;
 alter table public.knowledge_base enable row level security;
 
-create policy "staff read profiles" on public.profiles for select to authenticated using (public.is_active_staff());
+create policy "staff read profiles" on public.profiles for select to authenticated using ((select auth.uid()) = id or (select public.is_active_staff()));
 -- Somente administradores alteram profiles, impedindo elevação do próprio papel pelo cliente.
 create policy "admins update profiles" on public.profiles for update to authenticated using (public.is_admin()) with check (public.is_admin());
 create policy "admins insert profiles" on public.profiles for insert to authenticated with check (public.is_admin());
