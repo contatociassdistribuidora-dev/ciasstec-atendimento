@@ -1,24 +1,57 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- QR Code efêmero em data URL local. */
 
 import { useCallback, useEffect, useState } from "react";
-import { Link2, Loader2, RefreshCw, X } from "lucide-react";
-import { getLocalWhatsAppStatus, localWhatsAppFetch, LOCAL_WHATSAPP_URL, type LocalWhatsAppStatus } from "@/lib/local-whatsapp";
+import { Link2, Loader2, RefreshCw } from "lucide-react";
+import { LOCAL_WHATSAPP_URL, localWhatsAppFetch } from "@/lib/local-whatsapp";
 
-const labels: Record<string,string> = { starting:"Conectando", authenticated:"Conectando", connecting:"Conectando", qr_required:"Aguardando QR", online:"Online", disconnected:"Offline", error:"Offline" };
-const empty: LocalWhatsAppStatus = { connected:false, state:"offline", sessionAvailable:false };
+type ConnectorState = "offline" | "qr_required" | "connecting" | "connected" | "error";
+type QrResponse = { connected?: boolean; state?: string; qr?: string | null };
+const labels: Record<ConnectorState, string> = { offline: "Offline", qr_required: "Aguardando QR Code", connecting: "Conectando", connected: "Conectado", error: "Erro" };
+
+function mapState(body: QrResponse): ConnectorState {
+  if (body.connected || body.state === "online") return "connected";
+  if (body.state === "qr_required") return "qr_required";
+  if (["starting", "authenticated", "connecting"].includes(body.state ?? "")) return "connecting";
+  if (body.state === "error") return "error";
+  return "offline";
+}
 
 export function LocalWhatsAppCard() {
-  const [status,setStatus]=useState(empty),[reachable,setReachable]=useState(false),[busy,setBusy]=useState(false),[qr,setQr]=useState<string|null>(null),[open,setOpen]=useState(false),[error,setError]=useState(""),[token,setToken]=useState("");
-  const refresh=useCallback(async()=>{try{const next=await getLocalWhatsAppStatus();setStatus(next);setReachable(true);setError("");if(next.connected)setQr(null)}catch(e){setReachable(false);setStatus(empty);if(open)setError(e instanceof Error?e.message:"Conector indisponível.")}},[open]);
-  useEffect(()=>{setToken(localStorage.getItem("ciasstec_whatsapp_local_token")??"");void refresh();const timer=setInterval(()=>void refresh(),5000);return()=>clearInterval(timer)},[refresh]);
-  async function connect(){setBusy(true);setOpen(true);setError("");try{const response=await localWhatsAppFetch("/qr");if(!response.ok)throw new Error(response.status===401?"Informe o token local correto.":"Não foi possível consultar o QR.");const body=await response.json();setReachable(true);setStatus({connected:body.connected,state:body.state});setQr(body.qr);if(!body.connected&&!body.qr)setError("O conector está iniciando. Aguarde alguns segundos.")}catch{setError("O navegador não alcançou o conector em 127.0.0.1. Inicie o serviço local e permita o acesso à rede local neste navegador.")}finally{setBusy(false)}}
-  function saveToken(){localStorage.setItem("ciasstec_whatsapp_local_token",token.trim());setError("");void connect()}
-  async function logout(){if(!confirm("Desconectar o WhatsApp Web Local e remover a sessão vinculada?"))return;setBusy(true);try{const response=await localWhatsAppFetch("/logout",{method:"POST"});if(!response.ok)throw new Error();setQr(null);await refresh()}catch{setError("Não foi possível desconectar.")}finally{setBusy(false)}}
-  const state=reachable?(labels[status.state]??(status.connected?"Online":"Offline")):"Offline";
-  /* O QR é um data URL efêmero e não deve passar pelo otimizador de imagens. */
-  return <>
-    <div className="mt-4 rounded-xl border border-slate-200 p-4"><div className="flex flex-wrap items-start gap-3"><span className="rounded-lg bg-emerald-50 p-2 text-emerald-700"><Link2 className="size-4"/></span><div className="min-w-0 flex-1"><b className="block text-sm">WhatsApp Web Local</b><span className={`text-xs ${status.connected?"text-emerald-700":status.state==="qr_required"?"text-amber-700":"text-slate-500"}`}>● {state}</span></div><button type="button" onClick={()=>void connect()} disabled={busy} className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">{status.connected?"Reconectar":"Conectar WhatsApp"}</button>{status.connected&&<button type="button" onClick={()=>void logout()} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700">Desconectar</button>}</div><dl className="mt-3 grid gap-2 text-xs text-slate-600 sm:grid-cols-2"><div><dt className="font-semibold">Número conectado</dt><dd>{status.phone??"—"}</dd></div><div><dt className="font-semibold">Última conexão</dt><dd>{status.lastConnectedAt?new Date(status.lastConnectedAt).toLocaleString("pt-BR"):"—"}</dd></div><div><dt className="font-semibold">Sessão disponível</dt><dd>{status.sessionAvailable?"Sim":"Não"}</dd></div><div><dt className="font-semibold">Conector local</dt><dd>{reachable?"Online":"Offline"}</dd></div></dl></div>
-    {/* eslint-disable-next-line @next/next/no-img-element */}
-    {open&&<div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4" role="dialog" aria-modal="true"><div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"><div className="flex justify-between"><div><h2 className="font-bold">Conectar WhatsApp</h2><p className="text-xs text-slate-500">{LOCAL_WHATSAPP_URL}</p></div><button onClick={()=>setOpen(false)} aria-label="Fechar"><X className="size-5"/></button></div>{status.connected?<p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">WhatsApp conectado com sucesso.</p>:<><p className="mt-4 text-sm text-slate-600">Abra o WhatsApp Business no celular → Aparelhos conectados → Conectar aparelho e escaneie este QR Code.</p><div className="mt-4 grid min-h-64 place-items-center rounded-xl bg-slate-50 p-3">{qr?<img src={qr} alt="QR Code para conectar o WhatsApp Business" className="size-64"/>:busy?<Loader2 className="animate-spin text-teal-600"/>:<button onClick={()=>void connect()} className="inline-flex items-center gap-2 text-sm font-semibold text-teal-700"><RefreshCw className="size-4"/>Atualizar QR</button>}</div></>}{error&&<p role="alert" className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{error}</p>}<label className="mt-4 block text-xs font-semibold text-slate-600">Token local opcional<input type="password" value={token} onChange={e=>setToken(e.target.value)} className="mt-1 h-9 w-full rounded-lg border px-3"/></label><button onClick={saveToken} className="mt-2 text-xs font-semibold text-teal-700">Salvar token somente neste navegador</button></div></div>}
-  </>;
+  const [state, setState] = useState<ConnectorState>("offline");
+  const [qr, setQr] = useState<string | null>(null);
+  const [token, setToken] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const refresh = useCallback(async () => {
+    setLoading(true); setMessage("");
+    try {
+      const health = await localWhatsAppFetch("/health");
+      if (!health.ok) throw new Error("health");
+      const response = await localWhatsAppFetch("/qr");
+      if (!response.ok) {
+        if (response.status === 401) { setState("error"); setMessage("Informe o token local correto para acessar o conector."); return; }
+        throw new Error("qr");
+      }
+      const body = await response.json() as QrResponse;
+      const nextState = mapState(body);
+      setState(nextState);
+      setQr(nextState === "qr_required" && body.qr?.startsWith("data:image/png;base64,") ? body.qr : null);
+    } catch {
+      setState("offline"); setQr(null);
+      setMessage("Não foi possível acessar o conector WhatsApp instalado neste computador. Verifique se o serviço local está executando e permita acesso à rede local no navegador.");
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { setToken(localStorage.getItem("ciasstec_whatsapp_local_token") ?? ""); void refresh(); }, [refresh]);
+  function saveToken() { const value = token.trim(); if (value) localStorage.setItem("ciasstec_whatsapp_local_token", value); else localStorage.removeItem("ciasstec_whatsapp_local_token"); void refresh(); }
+
+  return <section className="mt-4 rounded-xl border border-slate-200 p-4" aria-labelledby="whatsapp-local-title">
+    <div className="flex flex-wrap items-start gap-3"><span className="rounded-lg bg-emerald-50 p-2 text-emerald-700"><Link2 className="size-4"/></span><div className="min-w-0 flex-1"><b id="whatsapp-local-title" className="block text-sm">WhatsApp Web Local</b><span className={`text-xs ${state === "connected" ? "text-emerald-700" : state === "qr_required" || state === "connecting" ? "text-amber-700" : state === "error" ? "text-rose-700" : "text-slate-500"}`}>● {labels[state]}</span></div><button type="button" onClick={() => void refresh()} disabled={loading} className="inline-flex items-center gap-2 rounded-lg border border-teal-200 px-3 py-2 text-xs font-semibold text-teal-700 disabled:opacity-60">{loading ? <Loader2 className="size-4 animate-spin"/> : <RefreshCw className="size-4"/>}Atualizar status</button></div>
+    <dl className="mt-3 text-xs text-slate-600"><dt className="font-semibold">Endereço</dt><dd>{LOCAL_WHATSAPP_URL}</dd></dl>
+    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end"><label className="flex-1 text-xs font-semibold text-slate-600">Token local opcional<input type="password" autoComplete="off" value={token} onChange={event => setToken(event.target.value)} className="mt-1 h-9 w-full rounded-lg border border-slate-200 px-3"/></label><button type="button" onClick={saveToken} className="h-9 rounded-lg bg-teal-600 px-3 text-xs font-semibold text-white">Salvar localmente</button></div>
+    {message && <p role="alert" className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{message}</p>}
+    {state === "qr_required" && qr && <div className="mt-4 rounded-xl bg-slate-50 p-4 text-center"><p className="mb-3 text-xs text-slate-600">Abra o WhatsApp Business → Aparelhos conectados → Conectar aparelho e escaneie este QR Code.</p><img src={qr} alt="QR Code para conectar o WhatsApp Business" className="mx-auto size-64 max-w-full"/></div>}
+  </section>;
 }
