@@ -17,6 +17,7 @@ import { ReportsDashboard } from "@/components/reports-dashboard";
 import { SettingsManagement } from "@/components/settings-management";
 import { LocalAiStatus } from "@/components/local-ai-status";
 import { generateLocalAiSuggestion, useLocalAiStatus, type ConversationMessage } from "@/lib/local-ai";
+import { ConversationInbox } from "@/components/conversation-inbox";
 
 type View = "Dashboard" | "Atendimentos" | "Clientes" | "Equipamentos" | "Ordens de Serviço" | "Orçamentos" | "Base de conhecimento" | "Relatórios" | "Configurações";
 
@@ -85,6 +86,8 @@ function Dashboard({ go }: { go: (v: View) => void }) {
   </div>;
 }
 
+// Mantido como demonstração visual legada; a operação real usa ConversationInbox.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function Conversations() {
   const [selected, setSelected] = useState(0); const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ConversationMessage[]>([
@@ -142,7 +145,7 @@ export function AtendimentoApp({ user }: { user: AuthenticatedUser }) {
   const [view,setView]=useState<View>("Dashboard"); const [mobile,setMobile]=useState(false);
   const initials = user.fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "US";
   async function logout() { const supabase=createSupabaseClient(); if (supabase) await supabase.auth.signOut(); window.location.replace("/login"); }
-  const content=useMemo(()=>({Dashboard:<DashboardOverview userName={user.fullName}/>,Atendimentos:<Conversations/>,Clientes:<CustomerManagement/>,Equipamentos:<EquipmentManagement/>,"Ordens de Serviço":<ServiceOrderManagement/>,Orçamentos:<QuoteManagement/>,"Base de conhecimento":<Knowledge/>,Relatórios:<ReportsDashboard/>,Configurações:<SettingsManagement canEdit={user.role === "admin"}/>})[view],[view,user.fullName,user.role]);
+  const content=useMemo(()=>({Dashboard:<DashboardOverview userName={user.fullName}/>,Atendimentos:<ConversationInbox/>,Clientes:<CustomerManagement/>,Equipamentos:<EquipmentManagement/>,"Ordens de Serviço":<ServiceOrderManagement/>,Orçamentos:<QuoteManagement/>,"Base de conhecimento":<Knowledge/>,Relatórios:<ReportsDashboard/>,Configurações:<SettingsManagement canEdit={user.role === "admin"}/>})[view],[view,user.fullName,user.role]);
   return <div className="min-h-screen bg-[#f4f7f7]"><aside className={`no-print fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#123b3c] text-white transition-transform lg:translate-x-0 ${mobile?"translate-x-0":"-translate-x-full"}`}><div className="flex h-20 items-center gap-3 border-b border-white/10 px-5"><span className="grid size-10 place-items-center rounded-xl bg-teal-500"><Wrench className="size-5"/></span><div><strong className="block tracking-wide">CIASSTEC</strong><span className="text-xs text-teal-100/70">Atendimento</span></div><button onClick={()=>setMobile(false)} className="ml-auto lg:hidden"><X/></button></div><nav className="flex-1 space-y-1 overflow-y-auto p-3">{nav.map(({name,icon:Icon})=><button key={name} onClick={()=>{setView(name);setMobile(false)}} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${view===name?"bg-teal-500 font-semibold text-white shadow-lg shadow-black/10":"text-teal-50/70 hover:bg-white/10 hover:text-white"}`}><Icon className="size-[18px]"/>{name}</button>)}</nav><div className="border-t border-white/10 p-4"><div className="flex items-center gap-3"><Avatar initials={initials} className="bg-teal-500 text-white"/><div className="min-w-0"><strong className="block truncate text-sm">{user.fullName}</strong><span className="text-xs text-teal-100/60">{roleLabels[user.role]}</span></div></div><div className="mt-3 truncate text-[10px] text-teal-100/50">{user.email}</div></div></aside>{mobile&&<button aria-label="Fechar menu" onClick={()=>setMobile(false)} className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden"/>}<div className="lg:pl-64"><header className="no-print sticky top-0 z-20 flex h-16 items-center border-b border-slate-200 bg-white/90 px-4 backdrop-blur lg:px-7"><button onClick={()=>setMobile(true)} aria-label="Abrir menu" className="mr-3 rounded-lg p-2 hover:bg-slate-100 lg:hidden"><Menu/></button><div className="hidden max-w-sm flex-1 sm:block"><EmptySearch placeholder="Pesquisar em todo o sistema"/></div><div className="ml-auto flex items-center gap-2"><button className="relative rounded-xl p-2.5 text-slate-500 hover:bg-slate-100"><Bell className="size-5"/><span className="absolute right-2 top-2 size-2 rounded-full bg-orange-500 ring-2 ring-white"/></button><button onClick={logout} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"><LogOut className="size-4"/><span className="hidden sm:inline">Sair</span></button></div></header><main className="p-4 lg:p-7">{content}</main></div></div>;
 }
 

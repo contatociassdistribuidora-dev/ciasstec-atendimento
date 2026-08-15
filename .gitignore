@@ -42,3 +42,20 @@ next-env.d.ts
 /outputs/
 /work/
 .env*
+
+# WhatsApp Web Local (sessao, cache e dados locais nunca versionados)
+/whatsapp-local/.wwebjs_auth/
+/whatsapp-local/.wwebjs_cache/
+/whatsapp-local/logs/
+/whatsapp-local/node_modules/
+/whatsapp-local/.env
+!/whatsapp-local/.env.example
+
+# modelos, bancos e logs locais
+*.gguf
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log

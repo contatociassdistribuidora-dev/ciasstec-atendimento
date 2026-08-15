@@ -5,6 +5,7 @@ import { Bot, CheckCircle2, Loader2, Mail, MessageCircle, X, XCircle } from "luc
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { LocalAiStatus } from "@/components/local-ai-status";
+import { LocalWhatsAppCard } from "@/components/local-whatsapp-card";
 
 type Status = {
   whatsapp: { configured: boolean; accessToken: boolean; phoneNumberId: boolean; verifyToken: boolean };
@@ -112,6 +113,7 @@ export function SettingsManagement({ canEdit }: { canEdit: boolean }) {
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="font-bold">Integrações</h2>
         <div className="mt-4"><LocalAiStatus detailed/></div>
+        {canEdit&&<LocalWhatsAppCard/>}
         {!canEdit&&<p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">Os detalhes das integrações são restritos a administradores.</p>}
         {statusError&&<p className="mt-3 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{statusError}</p>}
         {canEdit&&<div className="mt-4 space-y-3">{cards.map(card=>{const Icon=card.icon; return <button type="button" key={card.id} onClick={()=>{setModal(card.id);setTestMessage("")}} className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40"><span className="rounded-lg bg-slate-100 p-2"><Icon className="size-4"/></span><span className="flex-1"><b className="block text-sm">{card.name}</b><span className={`text-xs ${card.state==="Configurado"?"text-emerald-700":card.state==="Não configurado"?"text-slate-500":"text-amber-700"}`}>● {card.state}</span></span><span className="text-xs font-semibold text-teal-700">Detalhes</span></button>})}</div>}
