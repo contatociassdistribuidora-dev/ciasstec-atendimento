@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+:root { --background: #f4f7f7; --foreground: #183033; }
+@theme inline { --color-background: var(--background); --color-foreground: var(--foreground); --font-sans: var(--font-geist-sans); }
+* { box-sizing: border-box; }
+html { background: var(--background); }
+body { background: var(--background); color: var(--foreground); font-family: var(--font-geist-sans), Arial, sans-serif; margin: 0; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-thumb { background: #cad8d8; border-radius: 999px; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.page-enter { animation: slideIn .22s ease-out; }
+@media print { .no-print { display: none !important; } body { background: white; } }
+
+@layer components {
+  .field { @apply text-xs font-semibold text-slate-600; }
+  .input { @apply mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100; }
+  .textarea { @apply mt-1 h-20 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-teal-500; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60; }
+}
