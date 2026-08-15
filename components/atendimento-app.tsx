@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import {
   Activity, BarChart3, Bell, BookOpen, Bot, Check, ChevronRight, CircleDollarSign,
   ClipboardList, Clock3, Computer, FileText, Headphones, LayoutDashboard,
-  LogOut, Menu, MessageCircle, MoreHorizontal, PackageCheck, Plus, Search, Send,
+  Loader2, LogOut, Menu, MessageCircle, MoreHorizontal, PackageCheck, Plus, Search, Send,
   Settings, Users, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
@@ -15,6 +15,8 @@ import { DashboardOverview } from "@/components/dashboard-overview";
 import { QuoteManagement } from "@/components/quote-management";
 import { ReportsDashboard } from "@/components/reports-dashboard";
 import { SettingsManagement } from "@/components/settings-management";
+import { LocalAiStatus } from "@/components/local-ai-status";
+import { generateLocalAiSuggestion, useLocalAiStatus, type ConversationMessage } from "@/lib/local-ai";
 
 type View = "Dashboard" | "Atendimentos" | "Clientes" | "Equipamentos" | "Ordens de Serviço" | "Orçamentos" | "Base de conhecimento" | "Relatórios" | "Configurações";
 
@@ -84,13 +86,28 @@ function Dashboard({ go }: { go: (v: View) => void }) {
 }
 
 function Conversations() {
-  const [selected, setSelected] = useState(0); const [draft, setDraft] = useState(""); const [messages, setMessages] = useState(["Olá, bom dia! Meu notebook está esquentando muito e desligando sozinho.", "Bom dia, Mariana! Entendi. Isso costuma acontecer durante alguma tarefa específica ou mesmo sem uso intenso?", "Normalmente quando estou em reunião e com algumas abas abertas."]);
-  const generate = async () => { setDraft("Entendi, Mariana. Esse comportamento pode indicar superaquecimento por acúmulo de poeira ou falha no sistema de refrigeração. Recomendo trazer o notebook para uma avaliação técnica. Você consegue informar o modelo e há quanto tempo foi feita a última limpeza?"); };
-  const send = () => { if (!draft.trim()) return; setMessages([...messages, draft]); setDraft(""); };
+  const [selected, setSelected] = useState(0); const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState<ConversationMessage[]>([
+    { role: "cliente", text: "Olá, bom dia! Meu notebook está esquentando muito e desligando sozinho." },
+    { role: "atendente", text: "Bom dia, Mariana! Entendi. Isso costuma acontecer durante alguma tarefa específica ou mesmo sem uso intenso?" },
+    { role: "cliente", text: "Normalmente quando estou em reunião e com algumas abas abertas." },
+  ]);
+  const { state: aiState, refresh: refreshAi } = useLocalAiStatus();
+  const [generating, setGenerating] = useState(false); const [aiMessage, setAiMessage] = useState(""); const [sources, setSources] = useState<string[]>([]);
+  const generate = async () => {
+    if (aiState !== "online") { setAiMessage("CIASSTEC IA Local não está disponível neste computador."); void refreshAi(); return; }
+    setGenerating(true); setAiMessage("Consultando IA Local..."); setSources([]); const started=performance.now();
+    try {
+      const result=await generateLocalAiSuggestion({customerName:active.name,messages,equipment:"Notebook",reportedIssue:"Superaquecimento e desligamento durante o uso"});
+      setDraft(result.answer); setSources((result.sources??[]).map(source=>source.titulo)); setAiMessage(`Sugestão gerada em ${((performance.now()-started)/1000).toFixed(1)} segundos`);
+    } catch(error) { setAiMessage(error instanceof Error?error.message:"Não foi possível consultar a IA Local."); void refreshAi(); }
+    finally { setGenerating(false); }
+  };
+  const send = () => { if (!draft.trim()) return; setMessages([...messages, {role:"atendente",text:draft}]); setDraft(""); setAiMessage(""); setSources([]); };
   const active = conversations[selected];
   return <div className="page-enter flex h-[calc(100vh-8.7rem)] min-h-[560px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
     <aside className="w-full border-r border-slate-200 md:w-[340px]"><div className="border-b border-slate-100 p-4"><div className="mb-3 flex items-center justify-between"><div><h1 className="text-lg font-bold">Atendimentos</h1><p className="text-xs text-slate-500">12 conversas abertas</p></div><button aria-label="Nova conversa" className="rounded-lg bg-teal-600 p-2 text-white"><Plus className="size-4"/></button></div><EmptySearch placeholder="Buscar conversa"/></div><div className="overflow-y-auto">{conversations.map((c,i)=><button key={c.name} onClick={()=>setSelected(i)} className={`flex w-full gap-3 border-b border-slate-100 p-4 text-left transition ${selected===i?"bg-teal-50":"hover:bg-slate-50"}`}><Avatar initials={c.initials}/><span className="min-w-0 flex-1"><span className="flex justify-between"><strong className="truncate text-sm">{c.name}</strong><small className="text-[11px] text-slate-400">{c.time}</small></span><span className="mt-1 flex items-center gap-1"><MessageCircle className="size-3 text-emerald-500"/><small className="truncate text-slate-500">{c.text}</small></span></span>{c.unread>0&&<b className="grid size-5 place-items-center rounded-full bg-teal-600 text-[10px] text-white">{c.unread}</b>}</button>)}</div></aside>
-    <section className="hidden flex-1 flex-col md:flex"><header className="flex items-center gap-3 border-b border-slate-200 px-5 py-3"><Avatar initials={active.initials}/><div className="flex-1"><strong className="text-sm">{active.name}</strong><p className="text-xs text-emerald-600">online • via {active.origin}</p></div><button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><MoreHorizontal/></button></header><div className="flex-1 space-y-3 overflow-y-auto bg-[#edf3f1] p-6">{messages.map((m,i)=><div key={`${m}-${i}`} className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm ${i%2 ? "ml-auto rounded-br-sm bg-teal-600 text-white" : "rounded-bl-sm bg-white text-slate-700"}`}><p>{m}</p><div className={`mt-1 flex justify-end gap-1 text-[10px] ${i%2?"text-teal-100":"text-slate-400"}`}>{i===0?"10:31":i===1?"10:36":i===2?"10:39":"Agora"}{i%2===1&&<Check className="size-3"/>}</div></div>)}</div><div className="border-t border-slate-200 bg-white p-4"><button onClick={generate} className="mb-3 inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"><Bot className="size-4"/>Gerar resposta com IA</button><div className="flex items-end gap-2"><textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Digite uma mensagem..." rows={2} className="flex-1 resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-500"/><button onClick={send} aria-label="Enviar mensagem" className="rounded-xl bg-teal-600 p-3 text-white hover:bg-teal-700"><Send className="size-5"/></button></div><p className="mt-2 text-[10px] text-slate-400">Sugestões da IA nunca são enviadas automaticamente.</p></div></section>
+    <section className="hidden flex-1 flex-col md:flex"><header className="flex items-center gap-3 border-b border-slate-200 px-5 py-3"><Avatar initials={active.initials}/><div className="flex-1"><strong className="text-sm">{active.name}</strong><p className="text-xs text-emerald-600">online • via {active.origin}</p></div><LocalAiStatus/><button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><MoreHorizontal/></button></header><div className="flex-1 space-y-3 overflow-y-auto bg-[#edf3f1] p-6">{messages.map((m,i)=><div key={`${m.text}-${i}`} className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm shadow-sm ${m.role==="atendente" ? "ml-auto rounded-br-sm bg-teal-600 text-white" : "rounded-bl-sm bg-white text-slate-700"}`}><p>{m.text}</p><div className={`mt-1 flex justify-end gap-1 text-[10px] ${m.role==="atendente"?"text-teal-100":"text-slate-400"}`}>{i===0?"10:31":i===1?"10:36":i===2?"10:39":"Agora"}{m.role==="atendente"&&<Check className="size-3"/>}</div></div>)}</div><div className="border-t border-slate-200 bg-white p-4"><div className="mb-3 flex flex-wrap items-center gap-3"><button onClick={()=>void generate()} disabled={generating} className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 disabled:cursor-wait disabled:opacity-60">{generating?<Loader2 className="size-4 animate-spin"/>:<Bot className="size-4"/>}{generating?"Consultando IA Local...":"Gerar resposta com IA"}</button>{aiMessage&&<span role="status" className={`text-xs ${aiMessage.includes("gerada")?"text-emerald-700":"text-amber-700"}`}>{aiMessage}</span>}</div>{sources.length>0&&<p className="mb-2 text-xs text-slate-500">Fontes consultadas: {sources.join(", ")}</p>}<div className="flex items-end gap-2"><textarea value={draft} onChange={e=>setDraft(e.target.value)} placeholder="Digite uma mensagem..." rows={2} className="flex-1 resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-500"/><button onClick={send} aria-label="Enviar mensagem" className="rounded-xl bg-teal-600 p-3 text-white hover:bg-teal-700"><Send className="size-5"/></button></div><p className="mt-2 text-[10px] text-slate-400">Sugestões da IA nunca são enviadas automaticamente. Revise e edite antes de enviar.</p></div></section>
   </div>;
 }
 
