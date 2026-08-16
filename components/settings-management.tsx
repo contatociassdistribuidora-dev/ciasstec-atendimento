@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { LocalAiStatus } from "@/components/local-ai-status";
 import { LocalWhatsAppCard } from "@/components/local-whatsapp-card";
+import { AccountSecurity } from "@/components/account-security";
 
 type Status = {
   whatsapp: { configured: boolean; accessToken: boolean; phoneNumberId: boolean; verifyToken: boolean };
@@ -119,6 +120,7 @@ export function SettingsManagement({ canEdit }: { canEdit: boolean }) {
         {canEdit&&<div className="mt-4 space-y-3">{cards.map(card=>{const Icon=card.icon; return <button type="button" key={card.id} onClick={()=>{setModal(card.id);setTestMessage("")}} className="flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40"><span className="rounded-lg bg-slate-100 p-2"><Icon className="size-4"/></span><span className="flex-1"><b className="block text-sm">{card.name}</b><span className={`text-xs ${card.state==="Configurado"?"text-emerald-700":card.state==="Não configurado"?"text-slate-500":"text-amber-700"}`}>● {card.state}</span></span><span className="text-xs font-semibold text-teal-700">Detalhes</span></button>})}</div>}
         <p className="mt-4 text-xs text-slate-500">Somente a presença das variáveis no servidor é exibida. Valores secretos nunca são enviados ao navegador.</p>
       </section>
+      <AccountSecurity/>
     </div>}
     {modal&&status&&<div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4" role="dialog" aria-modal="true"><div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"><div className="flex items-start justify-between"><div><h2 className="text-lg font-bold">{cards.find(c=>c.id===modal)?.name}</h2><p className="text-sm text-slate-500">Status seguro da configuração no servidor</p></div><button aria-label="Fechar" onClick={()=>setModal(null)} className="rounded-lg p-2 hover:bg-slate-100"><X className="size-5"/></button></div><ul className="mt-5 space-y-3">
       {modal==="whatsapp"&&<><Flag ok={status.whatsapp.accessToken}>Token de acesso presente</Flag><Flag ok={status.whatsapp.phoneNumberId}>ID do telefone presente</Flag><Flag ok={status.whatsapp.verifyToken}>Token de verificação presente</Flag><Flag ok={true}>Webhook disponível em /api/webhooks/whatsapp</Flag><li className="text-sm text-slate-600">Número oficial: +55 (81) 98385-7466</li><li className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">A integração com a Meta permanece pausada; nenhuma inscrição é feita automaticamente.</li></>}
