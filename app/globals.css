@@ -17,12 +17,37 @@ button { cursor: pointer; }
 ::-webkit-scrollbar-thumb { background: #cad8d8; border-radius: 999px; }
 @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .page-enter { animation: slideIn .22s ease-out; }
+@page { size: A4 portrait; margin: 12mm; }
 @media print {
-  .no-print, body > *:not(:has(.sale-receipt)) { display: none !important; }
-  body { background: white; }
-  .sale-receipt { position: absolute; inset: 0; max-width: 210mm !important; margin: 0 auto !important; border-radius: 0 !important; box-shadow: none !important; }
-  .sale-receipt table { page-break-inside: auto; }
-  .sale-receipt tr { page-break-inside: avoid; }
+  html, body { min-height: 0 !important; height: auto !important; overflow: visible !important; background: white !important; }
+  body * { visibility: hidden !important; }
+  #sale-receipt, #sale-receipt * { visibility: visible !important; }
+  .no-print { display: none !important; }
+  #sale-receipt {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  #sale-receipt .receipt-content { padding: 0 !important; }
+  #sale-receipt .receipt-items { min-width: 0 !important; width: 100% !important; }
+  #sale-receipt table { page-break-inside: auto; border-collapse: collapse; }
+  #sale-receipt th, #sale-receipt td { padding: 7px 5px !important; color: #000 !important; background: #fff !important; }
+  #sale-receipt tr { page-break-inside: avoid; page-break-after: auto; }
+  #sale-receipt footer { page-break-inside: avoid; }
+}
+
+/* Estrutura preparada para uma futura folha térmica de 80 mm. */
+@media print and (max-width: 90mm) {
+  @page { size: 80mm auto; margin: 5mm; }
+  #sale-receipt { font-size: 10px !important; }
 }
 
 @layer components {
