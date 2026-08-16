@@ -13,5 +13,6 @@ export default async function DashboardPage() {
   if (!profile.active) { await supabase.auth.signOut(); redirect("/login?error=inactive"); }
   const admin = createAdminClient();
   if (admin) await admin.from("profiles").update({ last_login_at: new Date().toISOString() }).eq("id", user.id);
-  return <AtendimentoApp user={{ email: user.email ?? "", fullName: profile?.full_name ?? user.email ?? "Usuário", role: profile?.role ?? "attendant" }} />;
+  const { data: salesPermissions } = await supabase.from("profiles").select("can_sell, can_discount, can_cancel_sale").eq("id",user.id).maybeSingle();
+  return <AtendimentoApp user={{ email: user.email ?? "", fullName: profile?.full_name ?? user.email ?? "Usuário", role: profile?.role ?? "attendant", canSell:salesPermissions?.can_sell??false, canDiscount:salesPermissions?.can_discount??false, canCancelSale:salesPermissions?.can_cancel_sale??false }} />;
 }

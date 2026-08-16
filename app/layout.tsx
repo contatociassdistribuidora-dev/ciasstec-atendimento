@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = { themeColor: "#0f766e" };
+export const viewport: Viewport = { themeColor: "#102a43" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="pt-BR"><body className={`${geist.variable} antialiased`}>{children}</body></html>;

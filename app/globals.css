@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
-:root { --background: #f4f7f7; --foreground: #183033; }
+:root {
+  --ciass-navy: #102a43; --ciass-navy-strong: #071a2d; --ciass-orange: #e95420;
+  --ciass-white: #ffffff; --ciass-light: #f5f7fa; --ciass-muted: #64748b;
+  --ciass-success: #15803d; --ciass-warning: #c76a00; --ciass-danger: #be123c;
+  --background: var(--ciass-light); --foreground: #172033;
+}
 @theme inline { --color-background: var(--background); --color-foreground: var(--foreground); --font-sans: var(--font-geist-sans); }
 * { box-sizing: border-box; }
 html { background: var(--background); scroll-behavior: smooth; }
@@ -12,13 +17,24 @@ button { cursor: pointer; }
 ::-webkit-scrollbar-thumb { background: #cad8d8; border-radius: 999px; }
 @keyframes slideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .page-enter { animation: slideIn .22s ease-out; }
-@media print { .no-print { display: none !important; } body { background: white; } }
+@media print {
+  .no-print, body > *:not(:has(.sale-receipt)) { display: none !important; }
+  body { background: white; }
+  .sale-receipt { position: absolute; inset: 0; max-width: 210mm !important; margin: 0 auto !important; border-radius: 0 !important; box-shadow: none !important; }
+  .sale-receipt table { page-break-inside: auto; }
+  .sale-receipt tr { page-break-inside: avoid; }
+}
 
 @layer components {
   .field { @apply text-xs font-semibold text-slate-600; }
-  .input { @apply mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100; }
-  .textarea { @apply mt-1 h-20 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-teal-500; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60; }
+  .input { @apply mt-1 h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2; border-color: #dbe3ec; --tw-ring-color: color-mix(in srgb, var(--ciass-orange) 18%, transparent); }
+  .textarea { @apply mt-1 h-20 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:ring-2; --tw-ring-color: color-mix(in srgb, var(--ciass-orange) 18%, transparent); }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white disabled:opacity-60; background: var(--ciass-orange); }
+  .btn:hover { filter: brightness(.92); }
+  .btn-secondary { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-40; }
+  .ciass-card { @apply rounded-2xl border border-slate-200 bg-white shadow-sm; }
+  .ciass-card table th { @apply bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .ciass-card table td { @apply border-t border-slate-100 px-5 py-4; }
 }
 
 @layer components {

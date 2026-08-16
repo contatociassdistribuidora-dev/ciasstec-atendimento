@@ -9,7 +9,8 @@ const GENERATION_TIMEOUT_MS = 45_000;
 export type LocalAiState = "checking" | "online" | "offline";
 export type ConversationMessage = { role: "cliente" | "atendente"; text: string };
 type Health = { status?: string; model_found?: boolean; llama_online?: boolean };
-type ChatResult = { answer: string; sources?: Array<{ titulo: string; categoria: string }> };
+export type ChatSource = { titulo: string; categoria: string; fabricante?: string | null; modelo?: string | null; tipo_documento?: string | null; pagina?: number | null };
+type ChatResult = { answer: string; sources?: ChatSource[] };
 
 async function fetchWithTimeout(path: string, timeout: number, init?: RequestInit) {
   const controller = new AbortController();
